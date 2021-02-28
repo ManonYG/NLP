@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from flask import Flask
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+@app.route("/", methods=('GET', 'POST'))
+def main():
+    if request.method == 'POST':
+        texte = request.form['texte']
+    return render_template("ihm.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

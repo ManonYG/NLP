@@ -3,7 +3,9 @@ import nltk
 import pickle
 from flask import Flask, render_template, request
 from bs4 import BeautifulSoup
-#from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.ensemble import RandomForestClassifier
 
 app = Flask(__name__)
 
@@ -17,6 +19,8 @@ def main():
 
 def suggestions(texte):
     res = pre_processing(texte)
+    res = application_modele(res)
+    res = texte_reponse(res)
     return res
 
 def pre_processing(texte):
@@ -34,13 +38,46 @@ def pre_processing(texte):
     texte = [ps.stem(item) for item in texte]
     texte =  " ".join(texte)
 
-    #cv = CountVectorizer()
-    #filename = 'countvectoriser.sav'
-    #cv = pickle.load(open(countvectoriser, 'rb'))
-    #res = cv.transform(texte)
+    filename = 'countvectoriser.sav'
+    cv = pickle.load(open(filename, 'rb'))
+    res = cv.transform([texte])
     
-    return texte
+    filename = 'dim_reduction.sav'
+    dim_red = pickle.load(open(filename, 'rb'))
+    res = dim_red.transform(res)
+    
+    return res
+
+def application_modele(data):
+    res = []
+    filename = 'modeles.sav'
+    rf = pickle.load(open(filename, 'rb'))
+    
+    for i in range(20):
+        res.append(rf[i].predict(data)[0])
+    
+    return res
+
+def texte_reponse(tags):
+    filename = 'classes.sav'
+    classes = pickle.load(open(filename, 'rb'))
+    
+    liste_tags = []
+    for i in range(20):
+        if tags[i] == 1:
+            liste_tags.append(classes[i])
+    
+    if liste_tags:
+        res = "Tags suggérés :"
+        for tag in liste_tags:
+            res = res + " " + tag + ","
+        res = res[:-1]
+        res = res + "."
+    else:
+        res = "Nous n'avons pas pu trouver de tags à vous suggérer."
+    
+    return res
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8000)

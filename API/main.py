@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+import _pickle as cPickle
 import nltk
-import pickle
 from flask import Flask, render_template, request
 from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import CountVectorizer
@@ -31,7 +31,7 @@ def pre_processing(texte):
     texte = tokenizer.tokenize(texte)
     
     filename = 'stopwords.sav'
-    stopwords = pickle.load(open(filename, 'rb'))
+    stopwords = cPickle.load(open(filename, 'rb'))
     texte = [item for item in texte if item not in stopwords]
 
     ps = nltk.stem.PorterStemmer()
@@ -39,11 +39,11 @@ def pre_processing(texte):
     texte =  " ".join(texte)
 
     filename = 'countvectoriser.sav'
-    cv = pickle.load(open(filename, 'rb'))
+    cv = cPickle.load(open(filename, 'rb'))
     res = cv.transform([texte])
     
     filename = 'dim_reduction.sav'
-    dim_red = pickle.load(open(filename, 'rb'))
+    dim_red = cPickle.load(open(filename, 'rb'))
     res = dim_red.transform(res)
     
     return res
@@ -51,16 +51,17 @@ def pre_processing(texte):
 def application_modele(data):
     res = []
     filename = 'modeles.sav'
-    rf = pickle.load(open(filename, 'rb'))
+    rf = cPickle.load(open(filename, 'rb'))
     
+    pr = rf.predict_proba(data)
     for i in range(20):
-        res.append(rf[i].predict(data)[0])
+        res.append((pr[i][:,1] >= 0.1).astype('int'))
     
     return res
 
 def texte_reponse(tags):
     filename = 'classes.sav'
-    classes = pickle.load(open(filename, 'rb'))
+    classes = cPickle.load(open(filename, 'rb'))
     
     liste_tags = []
     for i in range(20):
@@ -80,4 +81,4 @@ def texte_reponse(tags):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8000)

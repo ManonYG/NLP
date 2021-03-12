@@ -9,6 +9,27 @@ from sklearn.ensemble import RandomForestClassifier
 
 app = Flask(__name__)
 
+print("Flask charge")
+filename = 'stopwords.sav'
+stopwords = cPickle.load(open(filename, 'rb'))
+print("Stopwords charges")
+
+filename = 'countvectoriser.sav'
+cv = cPickle.load(open(filename, 'rb'))
+print("CountVectoriser charge")
+
+filename = 'dim_reduction.sav'
+dim_red = cPickle.load(open(filename, 'rb'))
+print("dim_reduction charge")
+
+filename = 'modeles.sav'
+rf = cPickle.load(open(filename, 'rb'))
+print("modeles charges")
+
+filename = 'classes.sav'
+classes = cPickle.load(open(filename, 'rb'))
+print("Classes chargees")
+
 @app.route("/", methods=('GET', 'POST'))
 def main():
     tags=""
@@ -19,8 +40,11 @@ def main():
 
 def suggestions(texte):
     res = pre_processing(texte)
+    print("Pre processing fait")
     res = application_modele(res)
+    print("Modele applique")
     res = texte_reponse(res)
+    print("Reponse formulee")
     return res
 
 def pre_processing(texte):
@@ -30,28 +54,19 @@ def pre_processing(texte):
     tokenizer = nltk.RegexpTokenizer(r'\w+')
     texte = tokenizer.tokenize(texte)
     
-    filename = 'stopwords.sav'
-    stopwords = cPickle.load(open(filename, 'rb'))
     texte = [item for item in texte if item not in stopwords]
 
     ps = nltk.stem.PorterStemmer()
     texte = [ps.stem(item) for item in texte]
     texte =  " ".join(texte)
 
-    filename = 'countvectoriser.sav'
-    cv = cPickle.load(open(filename, 'rb'))
     res = cv.transform([texte])
-    
-    filename = 'dim_reduction.sav'
-    dim_red = cPickle.load(open(filename, 'rb'))
     res = dim_red.transform(res)
     
     return res
 
 def application_modele(data):
     res = []
-    filename = 'modeles.sav'
-    rf = cPickle.load(open(filename, 'rb'))
     
     pr = rf.predict_proba(data)
     for i in range(20):
@@ -60,9 +75,6 @@ def application_modele(data):
     return res
 
 def texte_reponse(tags):
-    filename = 'classes.sav'
-    classes = cPickle.load(open(filename, 'rb'))
-    
     liste_tags = []
     for i in range(20):
         if tags[i] == 1:

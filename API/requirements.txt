@@ -1,5 +1,4 @@
 scikit-learn
 nltk
-pickle
 flask
 bs4
